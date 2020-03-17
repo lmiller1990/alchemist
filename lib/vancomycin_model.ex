@@ -27,11 +27,15 @@ end
 
 defmodule VancomycinModel do
   def patient do
-    %Patient{age: 60, weight: 75, height: 170, sex: :male}
+    %Patient{age: 60, weight: 70, height: 170, sex: :male}
   end
 
   def doses do
     [%Dose{time: 0, rate: 500, length: 1}]
+  end
+
+  def responses do
+    [%Response{time: 0, secr: 90}]
   end
 
   def secr_mean(age, sex) do
@@ -72,8 +76,35 @@ defmodule VancomycinModel do
     k0 = dose.rate
     tinf = dose.length
     time_from_this_dose = t - k0_t
-    # for now
-    :rand.uniform(10)
+    get_single_dose_serum_level(0, k0, tinf, time_from_this_dose, t)
+  end
+
+  def vd_param() do
+    0.98
+  end
+
+  # TODO: cockcroft_gault and the other one
+  def cl(t) do
+    secr = VancomycinModel.get_secr_at_time(t, VancomycinModel.responses())
+
+    # we want this in L/h 
+    # TODO: find out why this is in L/h
+    76 * 60 / 1000
+  end
+
+  def vd(t) do
+    VancomycinModel.patient().weight * vd_param()
+  end
+
+  def kel(t) do
+    VancomycinModel.cl(t) / VancomycinModel.vd(t)
+  end
+
+  def get_single_dose_serum_level(k0_t, k0, tinf, t, time_of_dose) do
+    kel = VancomycinModel.kel(t)
+    vd = VancomycinModel.vd(t)
+    tic = k0_t + tinf
+    ( (k0 / (kel * vd)) * (1 - Math.exp(-1 * kel * tic)) * Math.exp(-1 * kel * (t - tic)))
   end
 
   def get_serum_level(time, doses) do
@@ -82,15 +113,7 @@ defmodule VancomycinModel do
     |> Enum.sum
   end
 
-  def format(patient, doses, _responses) do
-    IO.puts("Age: #{patient[:age]}, weight: #{patient[:weight]}, sex: #{patient[:sex]}")
-    IO.puts("Doses")
-    for dose <- doses do
-      IO.puts("#{dose[:rate]}mg at t#{dose[:time]} over at #{dose[:time]}")
-    end
-  end
-
-  def run(_patient, _doses, _responses) do
-    Enum.each(0..24, fn x -> VancomycinModel.get_serum_level(x, doses()) end)
+  def run(times) do
+    Enum.map(times, fn x -> VancomycinModel.get_serum_level(x, doses()) end)
   end
 end

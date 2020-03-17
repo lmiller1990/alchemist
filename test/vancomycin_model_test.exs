@@ -54,9 +54,11 @@ defmodule VancomycinModelTest do
     assert VancomycinModel.secr_mean(26, :male) == 84
   end
 
-  test "get_serum_level" do
-    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 1, rate: 500, length: 1}])
-    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 2, rate: 500, length: 1}])
-    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 23, rate: 500, length: 1}])
+  test "e2e" do
+    [t1, t2, t3] = VancomycinModel.run([1, 11, 24]) 
+
+    assert_in_delta t1, 7.05, 0.1 
+    assert_in_delta t2, 3.6, 0.1 
+    assert_in_delta t3, 1.5, 0.1 
   end
 end
