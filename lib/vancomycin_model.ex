@@ -1,9 +1,5 @@
 require Math
-
-defmodule Dose do
-  @enforce_keys [:time, :rate, :length]
-  defstruct [:time, :rate, :length]
-end
+require Util.Creatinine
 
 defmodule StaticValues do
   def min_conc_per_dose do
@@ -13,6 +9,11 @@ defmodule StaticValues do
   def tau do
     12
   end
+end
+
+defmodule Dose do
+  @enforce_keys [:time, :rate, :length]
+  defstruct [:time, :rate, :length]
 end
 
 defmodule Response do
@@ -26,6 +27,7 @@ defmodule Patient do
 end
 
 defmodule VancomycinModel do
+  alias Util.Creatinine
   def patient do
     %Patient{age: 60, weight: 70, height: 170, sex: :male}
   end
@@ -38,16 +40,6 @@ defmodule VancomycinModel do
     [%Response{time: 0, secr: 90}]
   end
 
-  def secr_mean(age, sex) do
-    cond do 
-      age <= 15 -> -2.37330 - (12.91367 * Math.log(age)) + (23.93581 * Math.sqrt(age))
-      age > 15 && age < 18 && sex == :female -> 4.7137 * age - 15.347
-      age > 15 && age < 18 && sex == :male -> 9.5471 * age - 87.847;
-      age > 18 && sex == :female -> 69.5
-      age > 18 && sex == :male -> 84
-    end
-  end
-
   def calculate_secr_at_time(time, doses, responses, patient) do
     t = cond do
       time == nil && List.first(responses) -> List.first(responses).time
@@ -55,7 +47,7 @@ defmodule VancomycinModel do
       true -> 0
     end
 
-    if t, do: t, else: secr_mean(patient.age, patient.sex)
+    if t, do: t, else: Creatinine.secr_mean(patient.age, patient.sex)
   end
 
   def get_secr_at_time(time, responses) do
@@ -85,14 +77,14 @@ defmodule VancomycinModel do
 
   # TODO: cockcroft_gault and the other one
   def cl(t) do
-    secr = VancomycinModel.get_secr_at_time(t, VancomycinModel.responses())
+    _secr = VancomycinModel.get_secr_at_time(t, VancomycinModel.responses())
 
     # we want this in L/h 
     # TODO: find out why this is in L/h
     76 * 60 / 1000
   end
 
-  def vd(t) do
+  def vd(_t) do
     VancomycinModel.patient().weight * vd_param()
   end
 
@@ -101,8 +93,8 @@ defmodule VancomycinModel do
   end
 
   def get_single_dose_serum_level(k0_t, k0, tinf, t, time_of_dose) do
-    kel = VancomycinModel.kel(t)
-    vd = VancomycinModel.vd(t)
+    kel = VancomycinModel.kel(time_of_dose)
+    vd = VancomycinModel.vd(time_of_dose)
     tic = k0_t + tinf
     ( (k0 / (kel * vd)) * (1 - Math.exp(-1 * kel * tic)) * Math.exp(-1 * kel * (t - tic)))
   end

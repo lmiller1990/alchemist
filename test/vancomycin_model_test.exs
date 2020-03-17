@@ -46,14 +46,6 @@ defmodule VancomycinModelTest do
     assert VancomycinModel.get_secr_at_time(1, []) == nil
   end
 
-  test "secr_mean" do
-    assert VancomycinModel.secr_mean(12, :female) == 48.45351362446261
-    assert VancomycinModel.secr_mean(16, :female) == 60.0722
-    assert VancomycinModel.secr_mean(16, :male) == 64.90660000000001
-    assert VancomycinModel.secr_mean(26, :female) == 69.5
-    assert VancomycinModel.secr_mean(26, :male) == 84
-  end
-
   test "e2e" do
     [t1, t2, t3] = VancomycinModel.run([1, 11, 24]) 
 
