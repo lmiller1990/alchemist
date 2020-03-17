@@ -53,4 +53,10 @@ defmodule VancomycinModelTest do
     assert VancomycinModel.secr_mean(26, :female) == 69.5
     assert VancomycinModel.secr_mean(26, :male) == 84
   end
+
+  test "get_serum_level" do
+    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 1, rate: 500, length: 1}])
+    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 2, rate: 500, length: 1}])
+    IO.puts VancomycinModel.get_serum_level(0, [%Dose{time: 23, rate: 500, length: 1}])
+  end
 end

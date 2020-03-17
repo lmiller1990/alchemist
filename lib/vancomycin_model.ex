@@ -5,6 +5,16 @@ defmodule Dose do
   defstruct [:time, :rate, :length]
 end
 
+defmodule StaticValues do
+  def min_conc_per_dose do
+    1.0e-8
+  end
+
+  def tau do
+    12
+  end
+end
+
 defmodule Response do
   @enforce_keys [:time]
   defstruct [:time, :conc, :secr]
@@ -16,8 +26,12 @@ defmodule Patient do
 end
 
 defmodule VancomycinModel do
-  def hello do
+  def patient do
     %Patient{age: 60, weight: 75, height: 170, sex: :male}
+  end
+
+  def doses do
+    [%Dose{time: 0, rate: 500, length: 1}]
   end
 
   def secr_mean(age, sex) do
@@ -53,8 +67,19 @@ defmodule VancomycinModel do
     if time < 0, do: throw("Error: time cannot be less than 0. You passed #{time}.")
   end
 
-  def get_serum_level(time) do
+  def get_conc(t, dose) do
+    k0_t = dose.time
+    k0 = dose.rate
+    tinf = dose.length
+    time_from_this_dose = t - k0_t
+    # for now
+    :rand.uniform(10)
+  end
+
+  def get_serum_level(time, doses) do
     VancomycinModel.verify_nonnegative(time)
+    Enum.map(doses, fn x -> get_conc(time, x) end)
+    |> Enum.sum
   end
 
   def format(patient, doses, _responses) do
@@ -66,6 +91,6 @@ defmodule VancomycinModel do
   end
 
   def run(_patient, _doses, _responses) do
-    Enum.each(0..24, &VancomycinModel.get_serum_level/1)
+    Enum.each(0..24, fn x -> VancomycinModel.get_serum_level(x, doses()) end)
   end
 end
